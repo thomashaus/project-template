@@ -1,0 +1,40 @@
+#!/bin/bash
+# Commit message hook - Enforces conventional commit format
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Regex for conventional commit format
+# type(scope): subject
+# types: feat, fix, refactor, perf, test, docs, chore, style, ci, build, revert
+FORMAT_REGEX="^(feat|fix|refactor|perf|test|docs|chore|style|ci|build|revert)(\(.+\))?: .{1,72}"
+
+if ! [[ "$COMMIT_MSG" =~ $FORMAT_REGEX ]]; then
+    echo "❌ Invalid commit message format!"
+    echo ""
+    echo "Expected format: type(scope): subject"
+    echo ""
+    echo "Types: feat, fix, refactor, perf, test, docs, chore, style, ci, build, revert"
+    echo ""
+    echo "Examples:"
+    echo "  feat(auth): add OAuth login"
+    echo "  fix(api): handle null response"
+    echo "  docs(readme): update setup instructions"
+    echo ""
+    echo "Your message:"
+    echo "  $COMMIT_MSG"
+    echo ""
+    echo "To bypass: git commit --no-verify"
+    exit 1
+fi
+
+# Check subject length
+SUBJECT=$(echo "$COMMIT_MSG" | head -n1)
+if [ ${#SUBJECT} -gt 72 ]; then
+    echo "❌ Commit subject too long (max 72 characters)"
+    echo "Length: ${#SUBJECT}"
+    echo "To bypass: git commit --no-verify"
+    exit 1
+fi
+
+echo "✓ Commit message format validated"
