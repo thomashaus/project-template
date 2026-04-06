@@ -3,9 +3,11 @@ info:
   title: API Gateway
   version: "0.1.0"
   description: Public-facing REST API
+  license:
+    name: MIT
 
 servers:
-  - url: http://localhost:3000/api/v1
+  - url: http://api.example.local/api/v1
     description: Local development
 
 paths:
@@ -14,6 +16,7 @@ paths:
       operationId: healthCheck
       summary: Health check endpoint
       tags: [system]
+      security: []
       responses:
         "200":
           description: Service is healthy
@@ -24,8 +27,19 @@ paths:
               example:
                 status: ok
                 timestamp: "2026-01-01T00:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication token
+
   parameters:
     CursorParam:
       name: cursor
@@ -87,3 +101,28 @@ components:
         instance:
           type: string
           format: uri
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+          example:
+            type: /errors/bad-request
+            title: Bad Request
+            status: 400
+            detail: Invalid request parameters
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+          example:
+            type: /errors/not-found
+            title: Not Found
+            status: 404
+            detail: Requested resource not found
