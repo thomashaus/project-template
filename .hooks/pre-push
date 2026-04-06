@@ -1,0 +1,75 @@
+#!/bin/bash
+# Pre-push hook - Comprehensive checks before pushing
+
+set -e
+
+echo "🚀 Running pre-push checks..."
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+ERRORS=0
+
+run_check() {
+    if eval "$1"; then
+        echo -e "${GREEN}✓ $2${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ $2${NC}"
+        ((ERRORS++))
+        return 1
+    fi
+}
+
+# Build check
+if [ -f "package.json" ] && grep -q "\"build\"" package.json; then
+    echo ""
+    echo "🏗️  Build:"
+    run_check "npm run build" "Production build" || true
+fi
+
+# Test suite
+if [ -f "package.json" ] && grep -q "\"test\"" package.json; then
+    echo ""
+    echo "🧪 Tests:"
+    run_check "npm test" "Test suite" || true
+fi
+
+# Full security scan
+if command -v gitleaks &> /dev/null && [ -f ".gitleaks.toml" ]; then
+    echo ""
+    echo "🔒 Security Scan:"
+    run_check "gitleaks detect --config .gitleaks.toml --no-banner" "Full security scan" || true
+fi
+
+# Check for TODO/FIXME in new commits
+echo ""
+echo "📝 TODO Check:"
+NEW_TODOS=$(git diff --name-only main...HEAD 2>/dev/null | xargs grep -n "TODO\|FIXME" 2>/dev/null || true)
+if [ -n "$NEW_TODOS" ]; then
+    echo -e "${YELLOW}⚠ Warning: TODO/FIXME comments in new code:${NC}"
+    echo "$NEW_TODOS" | head -10
+fi
+
+# Branch naming check
+echo ""
+echo "🌿 Branch Naming:"
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+if [[ ! "$CURRENT_BRANCH" =~ ^(feature|bugfix|hotfix|refactor|chore|test|docs|main|master|develop) ]]; then
+    echo -e "${YELLOW}⚠ Branch doesn't follow convention: feature/, bugfix/, hotfix/, etc.${NC}"
+    echo "Current: $CURRENT_BRANCH"
+fi
+
+# Summary
+echo ""
+if [ $ERRORS -gt 0 ]; then
+    echo -e "${RED}✗ $ERRORS check(s) failed${NC}"
+    echo ""
+    echo "Please fix errors or bypass with: git push --no-verify"
+    exit 1
+else
+    echo -e "${GREEN}✓ All checks passed! Ready to push.${NC}"
+fi
