@@ -50,6 +50,9 @@ and which past solutions informed the approach.
 Execute the plan with incremental commits, continuous testing, and spec validation.
 If the plan is thorough, this should be the easy part.
 
+**Branch naming**: Use `<type>/<issue-number>-description` format (e.g., `feat/42-user-auth`)
+to enable automatic workflow label transitions via GitHub Actions.
+
 ### Phase 3: Review (40% of effort)
 **Parallel multi-perspective review** using specialized subagents:
 - `security-sentinel` — vulnerabilities, injection, auth gaps
@@ -141,7 +144,22 @@ root_cause, and severity. This makes solutions searchable and categorizable by t
 | Services | Python 3.12 + FastAPI (Pydantic v2) |
 | Database | PostgreSQL 16 (node-pg-migrate) |
 | Specs | OpenAPI 3.1 + AsyncAPI 3.0 |
+| CI/CD | GitHub Actions (workflow automation) |
 | Dev Environment | Docker Compose |
+
+## GitHub Actions Automation
+
+The compound engineering workflow is **automated via GitHub Actions**:
+
+**Setup (one-time)**: Run Actions → Bootstrap Labels to create workflow labels
+
+**Automatic transitions**:
+- Branch created → `status:in-progress`
+- PR opened → `status:in-review`
+- PR merged → closes issue + prompts compound step
+- PR closed (no merge) → back to `status:in-progress`
+
+This reduces manual workflow tracking — agents focus on thinking, automation handles labels.
 
 ## Customization
 
