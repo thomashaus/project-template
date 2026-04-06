@@ -1,0 +1,84 @@
+# .github/workflows/bootstrap-labels.yml
+# ============================================================
+# Run once to create all labels needed for the compound
+# engineering workflow. Safe to re-run (skips existing labels).
+#
+# Trigger manually: Actions → Bootstrap Labels → Run workflow
+
+name: Bootstrap Labels
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  create-labels:
+    name: Create Workflow Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              // Status labels (workflow phases)
+              { name: 'status:ready',        color: '0E8A16', description: 'Ready to start — issue defined with acceptance criteria' },
+              { name: 'status:exploring',    color: '1D76DB', description: 'Brainstorm phase — exploring what to build' },
+              { name: 'status:planning',     color: '5319E7', description: 'Plan phase — research agents running, plan being created' },
+              { name: 'status:in-progress',  color: 'FBCA04', description: 'Work phase — feature branch active, executing plan' },
+              { name: 'status:in-review',    color: 'D93F0B', description: 'Review phase — multi-agent review in progress' },
+              { name: 'status:compounding',  color: 'B60205', description: 'Compound phase — capturing learnings' },
+              { name: 'status:blocked',      color: 'E4E669', description: 'Blocked — waiting on dependency or decision' },
+
+              // Type labels
+              { name: 'type:feature',        color: '0075CA', description: 'New feature or capability' },
+              { name: 'type:fix',            color: 'D73A4A', description: 'Bug fix' },
+              { name: 'type:refactor',       color: 'CFD3D7', description: 'Code refactoring — no behavior change' },
+              { name: 'type:docs',           color: '0075CA', description: 'Documentation only' },
+              { name: 'type:test',           color: 'BFD4F2', description: 'Adding or updating tests' },
+              { name: 'type:chore',          color: 'E4E669', description: 'Maintenance tasks' },
+              { name: 'type:perf',           color: 'D4C5F9', description: 'Performance improvement' },
+              { name: 'type:security',       color: 'B60205', description: 'Security vulnerability fix' },
+              { name: 'type:debt',           color: 'FBCA04', description: 'Technical debt remediation' },
+
+              // Priority labels
+              { name: 'priority:critical',   color: 'B60205', description: 'P0 — Drop everything' },
+              { name: 'priority:high',       color: 'D93F0B', description: 'P1 — This sprint' },
+              { name: 'priority:medium',     color: 'FBCA04', description: 'P2 — Next sprint' },
+              { name: 'priority:low',        color: '0E8A16', description: 'P3 — Backlog' },
+
+              // Component labels
+              { name: 'component:gateway',   color: '006B75', description: 'API Gateway (Node.js/Express)' },
+              { name: 'component:worker',    color: '006B75', description: 'Worker Service (Python/FastAPI)' },
+              { name: 'component:database',  color: '006B75', description: 'Database / Migrations' },
+              { name: 'component:specs',     color: '006B75', description: 'OpenAPI / AsyncAPI specs' },
+              { name: 'component:infra',     color: '006B75', description: 'Docker / CI / Infrastructure' },
+            ];
+
+            let created = 0;
+            let skipped = 0;
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  color: label.color,
+                  description: label.description,
+                });
+                console.log(`✅ Created: ${label.name}`);
+                created++;
+              } catch (e) {
+                if (e.status === 422) {
+                  console.log(`⏭  Exists: ${label.name}`);
+                  skipped++;
+                } else {
+                  console.log(`❌ Failed: ${label.name} — ${e.message}`);
+                }
+              }
+            }
+
+            console.log(`\nDone: ${created} created, ${skipped} already existed`);

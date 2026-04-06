@@ -1,0 +1,297 @@
+# .github/workflows/issue-lifecycle.yml
+# ============================================================
+# Automatically transitions issue labels through the compound
+# engineering workflow as development events occur.
+#
+# Flow:
+#   status:ready → status:in-progress → status:in-review → closed
+#
+# Triggers:
+#   Branch created (create)     → status:in-progress
+#   PR opened (pull_request)    → status:in-review
+#   PR merged (pull_request)    → closes issue (via "Closes #N")
+#   PR closed without merge     → status:in-progress (back to work)
+#
+# Branch naming convention required:
+#   feat/42-description  or  fix/42-description
+#   The number after the slash is the issue number.
+
+name: Issue Lifecycle
+
+on:
+  create:
+  pull_request:
+    types: [opened, closed, reopened, ready_for_review]
+
+permissions:
+  issues: write
+  pull-requests: read
+  contents: read
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Branch Created → status:in-progress
+  # ──────────────────────────────────────────────
+  branch-created:
+    name: Branch → In Progress
+    runs-on: ubuntu-latest
+    if: github.event_name == 'create' && github.event.ref_type == 'branch'
+    steps:
+      - name: Extract issue number from branch name
+        id: extract
+        run: |
+          BRANCH="${{ github.event.ref }}"
+          echo "Branch: $BRANCH"
+
+          # Match feat/42-desc, fix/42-desc, hotfix/42-desc, refactor/42-desc
+          if [[ "$BRANCH" =~ ^(feat|fix|hotfix|refactor|docs|test|chore|perf)/([0-9]+) ]]; then
+            ISSUE_NUM="${BASH_REMATCH[2]}"
+            echo "issue_number=$ISSUE_NUM" >> "$GITHUB_OUTPUT"
+            echo "Found issue #$ISSUE_NUM"
+          else
+            echo "No issue number found in branch name"
+            echo "issue_number=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Transition to in-progress
+        if: steps.extract.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ steps.extract.outputs.issue_number }};
+
+            // Get current labels
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+
+            const currentLabels = issue.labels.map(l => l.name);
+
+            // Remove any existing status labels
+            const statusLabels = currentLabels.filter(l => l.startsWith('status:'));
+            for (const label of statusLabels) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  name: label,
+                });
+              } catch (e) {
+                // Label might not exist, that's fine
+              }
+            }
+
+            // Add status:in-progress
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['status:in-progress'],
+            });
+
+            // Add a comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `🔨 Work started on branch \`${{ github.event.ref }}\`\n\nWorkflow phase: **Work** (Phase 3)`,
+            });
+
+            console.log(`Issue #${issueNumber} → status:in-progress`);
+
+  # ──────────────────────────────────────────────
+  # PR Opened → status:in-review
+  # ──────────────────────────────────────────────
+  pr-opened:
+    name: PR Opened → In Review
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'ready_for_review') &&
+      !github.event.pull_request.draft
+    steps:
+      - name: Extract issue numbers from PR
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            const branch = pr.head.ref || '';
+            const issueNumbers = new Set();
+
+            // Extract from PR body: "Closes #42", "Fixes #42", "Resolves #42"
+            const bodyMatches = body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi);
+            for (const match of bodyMatches) {
+              issueNumbers.add(parseInt(match[1]));
+            }
+
+            // Extract from branch name: feat/42-description
+            const branchMatch = branch.match(/^(?:feat|fix|hotfix|refactor|docs|test|chore|perf)\/(\d+)/);
+            if (branchMatch) {
+              issueNumbers.add(parseInt(branchMatch[1]));
+            }
+
+            const numbers = Array.from(issueNumbers);
+            core.setOutput('issue_numbers', JSON.stringify(numbers));
+            console.log(`Found issue numbers: ${numbers.join(', ')}`);
+
+      - name: Transition to in-review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumbers = JSON.parse('${{ steps.extract.outputs.issue_numbers }}');
+
+            for (const issueNumber of issueNumbers) {
+              try {
+                // Get current labels
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                });
+
+                const currentLabels = issue.labels.map(l => l.name);
+
+                // Remove existing status labels
+                const statusLabels = currentLabels.filter(l => l.startsWith('status:'));
+                for (const label of statusLabels) {
+                  try {
+                    await github.rest.issues.removeLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      name: label,
+                    });
+                  } catch (e) { /* ok */ }
+                }
+
+                // Add status:in-review
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: ['status:in-review'],
+                });
+
+                // Comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: `🔍 PR #${context.payload.pull_request.number} opened for review\n\nWorkflow phase: **Review** (Phase 4)`,
+                });
+
+                console.log(`Issue #${issueNumber} → status:in-review`);
+              } catch (e) {
+                console.log(`Could not update issue #${issueNumber}: ${e.message}`);
+              }
+            }
+
+  # ──────────────────────────────────────────────
+  # PR Merged → Close issue + comment
+  # PR Closed (not merged) → back to in-progress
+  # ──────────────────────────────────────────────
+  pr-closed:
+    name: PR Closed
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    steps:
+      - name: Extract issue numbers
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            const branch = pr.head.ref || '';
+            const issueNumbers = new Set();
+
+            const bodyMatches = body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi);
+            for (const match of bodyMatches) {
+              issueNumbers.add(parseInt(match[1]));
+            }
+
+            const branchMatch = branch.match(/^(?:feat|fix|hotfix|refactor|docs|test|chore|perf)\/(\d+)/);
+            if (branchMatch) {
+              issueNumbers.add(parseInt(branchMatch[1]));
+            }
+
+            const numbers = Array.from(issueNumbers);
+            core.setOutput('issue_numbers', JSON.stringify(numbers));
+            core.setOutput('merged', pr.merged.toString());
+
+      - name: Handle merge or close
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumbers = JSON.parse('${{ steps.extract.outputs.issue_numbers }}');
+            const merged = ${{ steps.extract.outputs.merged }};
+
+            for (const issueNumber of issueNumbers) {
+              try {
+                if (merged) {
+                  // PR was merged — add completion comment
+                  // GitHub auto-closes if "Closes #N" is in PR body,
+                  // so we just add the compound reminder comment
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: [
+                      `✅ Merged via PR #${context.payload.pull_request.number}`,
+                      '',
+                      '**Workflow phase: Compound** (Phase 5)',
+                      '',
+                      '> **Don\'t forget `/workflows:compound`** — capture what was learned so the next cycle is easier.',
+                    ].join('\n'),
+                  });
+
+                  console.log(`Issue #${issueNumber} → merged (compound reminder posted)`);
+
+                } else {
+                  // PR was closed without merging — back to in-progress
+                  const { data: issue } = await github.rest.issues.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                  });
+
+                  // Only transition if issue is still open
+                  if (issue.state === 'open') {
+                    const statusLabels = issue.labels.map(l => l.name).filter(l => l.startsWith('status:'));
+                    for (const label of statusLabels) {
+                      try {
+                        await github.rest.issues.removeLabel({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: issueNumber,
+                          name: label,
+                        });
+                      } catch (e) { /* ok */ }
+                    }
+
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      labels: ['status:in-progress'],
+                    });
+
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      body: `↩️ PR #${context.payload.pull_request.number} closed without merge — returning to **Work** phase.`,
+                    });
+
+                    console.log(`Issue #${issueNumber} → status:in-progress (PR closed without merge)`);
+                  }
+                }
+              } catch (e) {
+                console.log(`Could not update issue #${issueNumber}: ${e.message}`);
+              }
+            }
