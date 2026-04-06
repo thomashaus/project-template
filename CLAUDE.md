@@ -25,6 +25,8 @@ All inter-service contracts are spec-first: OpenAPI for REST, AsyncAPI for event
 │       └── patterns/       # Critical patterns — Required Reading
 ├── todos/                  # Structured review findings and action items
 ├── scripts/                # Build, deploy, and CI helper scripts
+├── .github/
+│   └── workflows/          # GitHub Actions CI/CD + workflow automation
 └── .claude/
     ├── agents/             # Agent definitions
     │   ├── research/       # Research subagents
@@ -44,6 +46,7 @@ All inter-service contracts are spec-first: OpenAPI for REST, AsyncAPI for event
 | Specs       | OpenAPI 3.1         | Swagger UI served from gateway     |
 | Events      | AsyncAPI 3.0        | For inter-service messaging        |
 | Containers  | Docker Compose      | Local dev environment              |
+| CI/CD       | GitHub Actions      | Automated testing + workflow automation |
 
 ## Key Commands
 
@@ -271,6 +274,35 @@ Brainstorm → Plan → Work → Review → Compound
 | `/workflows:compound` | 4 | — | Capture learnings for next cycle |
 | `/workflows:spec` | Any | — | Define/update API contracts |
 
+### GitHub Actions Automation
+
+The compound engineering workflow is **automated via GitHub Actions** based on branch naming and PR events:
+
+**Setup (one-time):**
+1. Go to Actions → Bootstrap Labels → Run workflow
+2. Creates all status/type/priority/component labels
+
+**Automatic label transitions:**
+- **Branch created** (e.g., `feat/42-description`) → `status:in-progress`
+- **PR opened** → `status:in-review`
+- **PR merged** → closes issue + prompts `/workflows:compound`
+- **PR closed** (no merge) → back to `status:in-progress`
+
+**Required branch naming:**
+- Format: `<type>/<issue-number>-description`
+- Examples: `feat/42-user-auth`, `fix/17-memory-leak`, `refactor/8-api-cleanup`
+- Types: `feat`, `fix`, `hotfix`, `refactor`, `docs`, `test`, `chore`, `perf`
+
+**Issue references:**
+- Include in PR body: "Closes #42", "Fixes #17", "Resolves #8"
+- Extracted from branch name OR PR body
+- GitHub auto-closes issues when PR is merged with these keywords
+
+**Benefits:**
+- Reduces manual workflow tracking
+- Automatic phase transitions based on real development events
+- Agents focus on thinking; automation handles rote label management
+
 ### Agent Team
 
 | Agent | Role | Notes |
@@ -377,7 +409,35 @@ The **cto agent** provides strategic technical leadership:
 
 ## Branching
 
+### Branch Naming Convention
+
+**Required for GitHub Actions automation:**
+
+Format: `<type>/<issue-number>-description`
+
+Examples:
+- `feat/42-user-authentication`
+- `fix/17-memory-leak-in-worker`
+- `refactor/8-api-endpoint-cleanup`
+- `docs/23-readme-update`
+- `test/56-add-integration-tests`
+
+**Valid types:**
+- `feat` — New feature
+- `fix` — Bug fix
+- `hotfix` — Urgent production fix
+- `refactor` — Code refactoring (no behavior change)
+- `docs` — Documentation only
+- `test` — Adding or updating tests
+- `chore` — Maintenance tasks
+- `perf` — Performance improvement
+
+### Branch Protection Rules
+
+**Main branch protection:**
 - `main` — protected, requires PR review
-- `feat/<n>` — feature branches
-- `fix/<n>` — bug fixes
 - Always branch from `main`, always rebase before PR
+- No direct edits to main
+- All changes via pull request
+- Tests, lint, security scan must pass
+- At least one approval for significant changes

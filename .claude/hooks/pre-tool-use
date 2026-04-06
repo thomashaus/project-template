@@ -1,0 +1,6 @@
+#!/bin/bash
+# PreToolUse Hook Wrapper
+# Calls the Node.js script to perform security checks
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$SCRIPT_DIR/pre-tool-use.mjs" "$@"
