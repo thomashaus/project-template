@@ -2,6 +2,8 @@
 
 Quick reference for the compound engineering workflow.
 
+**Note:** This is a project template. Commands that validate code (lint, typecheck, tests) assume services have been implemented. Use this cheatsheet after bootstrapping your project.
+
 ## The Loop
 
 ```
@@ -32,6 +34,8 @@ security: rotate exposed API key
 
 ## Before Every PR
 
+**After implementing services**, run these checks:
+
 ```bash
 npm run lint
 npm run typecheck
@@ -41,7 +45,7 @@ cd services/worker-service && uv run ruff check . && uv run pytest
 gitleaks detect --no-banner
 ```
 
-Or just run: `/workflows:review`
+Or just run: `/workflows:review` (automates all of the above)
 
 ## Hotfix Flow
 
