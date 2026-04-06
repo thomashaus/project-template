@@ -1,0 +1,21 @@
+# Tana API Keys
+title = "Tana API Tokens"
+
+[[rules]]
+id = "tana-api-token"
+description = "Tana API Token"
+regex = '''(?i)tana(.{0,20})?['\" ](api)?[_-]?token['\" ]?[=:][ '"][A-Za-z0-9_-]{20,}'''
+keywords = ["tana","token","api"]
+
+[[rules]]
+id = "tana-app-id"
+description = "Tana Application ID"
+regex = '''(?i)tana(.{0,20})?['\" ]app[_-]?id['\" ]?[=:][ '"][A-Za-z0-9_-]{16,}'''
+keywords = ["tana","application"]
+
+[[rules]]
+id = "tana-node-id"
+description = "Tana Node ID (for debugging only, usually safe)"
+regex = '''[A-Za-z0-9_-]{20,}\'''
+keywords = ["tana","node"]
+tags = ["debugging"]

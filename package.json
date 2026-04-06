@@ -1,0 +1,29 @@
+{
+  "name": "project-template",
+  "private": true,
+  "workspaces": [
+    "services/api-gateway"
+  ],
+  "scripts": {
+    "dev": "docker compose up -d",
+    "dev:gateway": "npm run dev --workspace=services/api-gateway",
+    "dev:worker": "cd services/worker-service && uv run fastapi dev src/main.py",
+    "lint": "npm run lint --workspace=services/api-gateway && cd services/worker-service && uv run ruff check .",
+    "lint:fix": "npm run lint:fix --workspace=services/api-gateway && cd services/worker-service && uv run ruff check --fix . && uv run ruff format .",
+    "typecheck": "npm run typecheck --workspace=services/api-gateway && cd services/worker-service && uv run mypy src/",
+    "test": "npm run test --workspace=services/api-gateway && cd services/worker-service && uv run pytest",
+    "spec:validate": "npx @redocly/cli lint specs/openapi/*.yaml && npx @asyncapi/cli validate specs/asyncapi/*.yaml",
+    "spec:generate": "npx openapi-typescript specs/openapi/*.yaml -o services/api-gateway/src/generated/",
+    "migrate": "node-pg-migrate --migration-dir db/migrations",
+    "migrate:create": "node-pg-migrate create --migration-dir db/migrations",
+    "docs:build": "echo 'TODO: configure doc builder'",
+    "pr": "./scripts/create-pr.sh"
+  },
+  "devDependencies": {
+    "@asyncapi/cli": "^2.0.0",
+    "@redocly/cli": "^1.0.0",
+    "node-pg-migrate": "^7.0.0",
+    "openapi-typescript": "^7.0.0",
+    "pg": "^8.0.0"
+  }
+}

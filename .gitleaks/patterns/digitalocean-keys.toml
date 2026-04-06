@@ -1,0 +1,20 @@
+# DigitalOcean API Keys
+title = "DigitalOcean Tokens"
+
+[[rules]]
+id = "do-api-token"
+description = "DigitalOcean API Token (dop_v1_)"
+regex = '''dop_v1_[a-f0-9]{64}'''
+keywords = ["digitalocean","dop_v1"]
+
+[[rules]]
+id = "do-access-token"
+description = "DigitalOcean Access Token"
+regex = '''(?i)digitalocean(.{0,20})?[='\" ][A-Za-z0-9]{64,}'''
+keywords = ["digitalocean","token","api"]
+
+[[rules]]
+id = "do-pat-token"
+description = "DigitalOcean Personal Access Token"
+regex = '''doo[pv]_[a-f0-9]{64}'''
+keywords = ["digitalocean","doo"]

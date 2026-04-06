@@ -1,0 +1,56 @@
+asyncapi: "3.0.0"
+info:
+  title: Service Events
+  version: "0.1.0"
+  description: Inter-service event contracts
+
+channels:
+  systemHealthChanged:
+    address: events.system.health-changed
+    messages:
+      HealthChangedMessage:
+        $ref: "#/components/messages/HealthChanged"
+
+operations:
+  publishHealthChanged:
+    action: send
+    channel:
+      $ref: "#/channels/systemHealthChanged"
+    summary: Published when service health status changes
+
+components:
+  messages:
+    HealthChanged:
+      payload:
+        $ref: "#/components/schemas/HealthChangedEvent"
+
+  schemas:
+    BaseEvent:
+      type: object
+      required: [eventId, timestamp, source]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        source:
+          type: string
+          description: Service that emitted the event
+
+    HealthChangedEvent:
+      allOf:
+        - $ref: "#/components/schemas/BaseEvent"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              type: object
+              required: [service, status]
+              properties:
+                service:
+                  type: string
+                status:
+                  type: string
+                  enum: [ok, degraded, down]

@@ -1,0 +1,55 @@
+# Gitleaks Configuration for Project Template
+# Base configuration with extended patterns
+
+title = "Project Template Secret Detection"
+
+# Extend base rules
+[extend]
+useDefault = true
+
+# Include custom pattern files
+[[rules.extend]]
+id = "aws-access-key"
+[extend.extend]
+description = "AWS Access Key ID"
+regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+
+[[rules.extend]]
+id = "do-api-token"
+[extend.extend]
+description = "DigitalOcean API Token"
+regex = '''dop_v1_[a-f0-9]{64}'''
+
+[[rules.extend]]
+id = "tana-api-token"
+[extend.extend]
+description = "Tana API Token"
+regex = '''(?i)tana(.{0,20})?['\" ](api)?[_-]?token['\" ]?[=:][ '"][A-Za-z0-9_-]{20,}'''
+
+# Allowlist for safe patterns
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''gitleaks\.toml''',
+  '''\.gitleaks/.*''',
+  '''node_modules/''',
+  '''\.env\.example''',
+  '''\.git/''',
+  '''\.vscode/''',
+  '''coverage/''',
+  '''dist/''',
+  '''build/'''
+]
+
+# Specific regex allowlists
+[[allowlist.regexes]]
+description = "Tana node IDs in debug logs"
+regex = '''[A-Za-z0-9_-]{20,}\''' # Only in comments/docs
+
+# Entropy-based detection for high-entropy strings (potential secrets)
+[[rules]]
+id = "high-entropy-string"
+description = "High entropy string (potential secret)"
+regex = '''[A-Za-z0-9/+]{32,}'''
+entropy = 4.5
+keywords = ["key", "token", "secret", "password", "credential"]
