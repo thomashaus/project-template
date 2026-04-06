@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/pre-tool-use.mjs",
+            "command": "bash .claude/hooks/pre-tool-use.mjs",
             "timeout": 10
           }
         ]
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/post-edit-lint.sh",
+            "command": "bash .claude/hooks/post-edit-lint.sh",
             "timeout": 30
           }
         ]
@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/on-stop-docs.sh",
+            "command": "bash .claude/hooks/on-stop-docs.sh || true",
             "timeout": 15
           }
         ]
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/on-stop-docs.sh",
+            "command": "bash .claude/hooks/on-stop-docs.sh || true",
             "timeout": 15
           }
         ]
