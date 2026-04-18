@@ -258,9 +258,9 @@ This project uses **compound engineering** methodology (inspired by Every.to).
 ### The Loop
 
 ```
-Brainstorm → Plan → Work → Review → Compound
-    ↑                                    ↓
-    └──── learnings feed back into ──────┘
+Brainstorm → Plan → Work → Review → Compound → PR
+    ↑                                               ↓
+    └──────── learnings feed back into ─────────────┘
 ```
 
 ### Workflow Commands
@@ -272,6 +272,7 @@ Brainstorm → Plan → Work → Review → Compound
 | `/workflows:work` | 2 | 20% | Execute plan with incremental commits |
 | `/workflows:review` | 3 | 40% | Multi-agent parallel code review |
 | `/workflows:compound` | 4 | — | Capture learnings for next cycle |
+| `/workflows:pr` | 5 | — | Create pull request (final step) |
 | `/workflows:spec` | Any | — | Define/update API contracts |
 
 ### GitHub Actions Automation

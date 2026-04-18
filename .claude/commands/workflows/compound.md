@@ -96,7 +96,7 @@ Based on problem type, optionally invoke review agents:
 ✓ Solution documented: docs/solutions/[category]/[filename].md
 
 What's next?
-1. Continue workflow (recommended)
+1. Create PR — run /workflows:pr (recommended if work is complete)
 2. Add to Required Reading — promote to critical-patterns.md
 3. Link related issues
 4. Update CLAUDE.md with new project rule
@@ -131,9 +131,9 @@ Or invoke manually: `/workflows:compound [context]`
 ## The Compounding Philosophy
 
 ```
-Plan → Work → Review → Compound → Repeat
-  ↑                                   ↓
-  └─── learnings feed back into ──────┘
+Plan → Work → Review → Compound → PR → Repeat
+  ↑                                        ↓
+  └──────── learnings feed back into ──────┘
 ```
 
 Each unit of engineering work should make subsequent units easier — not harder.

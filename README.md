@@ -20,14 +20,15 @@ Then start building:
 /workflows:work docs/plans/2026-02-09-feat-...   # Execute the plan
 /workflows:review                                # Multi-agent code review
 /workflows:compound                              # Capture learnings
+/workflows:pr                                    # Create pull request
 ```
 
 ## The Compound Engineering Loop
 
 ```
-Brainstorm → Plan → Work → Review → Compound
-    ↑                                    ↓
-    └──── learnings feed back into ──────┘
+Brainstorm → Plan → Work → Review → Compound → PR
+    ↑                                               ↓
+    └──────── learnings feed back into ─────────────┘
 ```
 
 **80/20 Rule**: 80% of effort in Plan + Review, 20% in Work.
@@ -70,6 +71,11 @@ Critical patterns get promoted to Required Reading. Universal rules get added to
 
 **This is the step that makes it compound.** Without it, knowledge stays in conversation
 history and disappears.
+
+### Phase 5: PR (final step)
+Run `/workflows:pr` after compound. Validates all checks (tests, lint, typecheck, security),
+creates a structured pull request, and includes `Closes #<issue>` to auto-close the GitHub
+issue on merge. GitHub Actions transitions the issue label and triggers CI.
 
 ## Knowledge System
 
