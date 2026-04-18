@@ -345,6 +345,7 @@ The compound engineering workflow is **automated via GitHub Actions** based on b
 | Feature explorations | `docs/brainstorms/` | During planning |
 | Review findings | `todos/` | During work prioritization |
 | API contracts | `specs/openapi/`, `specs/asyncapi/` | During work and review |
+| Workflow meta-learnings | `docs/workflow-learnings.md` | When adapting or improving the workflow |
 
 ### Compound Step Rules
 
