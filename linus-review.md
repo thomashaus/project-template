@@ -89,3 +89,30 @@ _(fill in)_
 
 ### Candidate critical-patterns
 _(fill in)_
+
+---
+
+## 2026-04-26 — Linus weekly sweep
+
+- Compound notes ingested this week: 0
+- Audit findings:
+  - **charlie-mcp** [P3] branch-naming: PR #3 branch 'feature/1-persist-oauth-tokens' doesn't follow <type>/<issue>-desc
+  - **atlas-mcp** [P2] missing-scaffold: missing docs/solutions
+  - **economyclaw** [P2] missing-scaffold: missing CLAUDE.md
+  - **economyclaw** [P2] missing-scaffold: missing docs/solutions
+  - **economyclaw** [P2] missing-scaffold: missing .github/workflows
+  - **espresso.haus** [P2] missing-scaffold: missing docs/solutions
+  - **espresso.haus** [P3] branch-naming: PR #2 branch 'dependabot/pip/backend/pip-5abb2dfbbd' doesn't follow <type>/<issue>-desc
+  - **espresso.haus** [P3] branch-naming: PR #1 branch 'dependabot/npm_and_yarn/npm_and_yarn-d4a1a5d767' doesn't follow <type>/<issue>-desc
+
+### Process gaps observed
+_(fill in)_
+
+### Recurring anti-patterns
+_(fill in)_
+
+### Recommended template additions
+_(fill in)_
+
+### Candidate critical-patterns
+_(fill in)_
